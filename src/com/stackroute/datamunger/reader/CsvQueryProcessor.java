@@ -1,6 +1,9 @@
 package com.stackroute.datamunger.reader;
 
+import java.io.BufferedReader; 
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 
 import com.stackroute.datamunger.query.DataTypeDefinitions;
@@ -8,14 +11,16 @@ import com.stackroute.datamunger.query.Header;
 
 public class CsvQueryProcessor extends QueryProcessingEngine {
 
-	
+
 
 	/*
 	 * parameterized constructor to initialize filename. As you are trying to
 	 * perform file reading, hence you need to be ready to handle the IO Exceptions.
 	 */
+	String fileName;
 	public CsvQueryProcessor(String fileName) throws FileNotFoundException {
-	
+		this.fileName = fileName;
+		FileReader fileReader = new FileReader(fileName);
 	}
 
 	/*
@@ -25,9 +30,16 @@ public class CsvQueryProcessor extends QueryProcessingEngine {
 	@Override
 	public Header getHeader() throws IOException {
 		// TODO Auto-generated method stub
-		return null;
+		File file = new File(fileName);
+		FileReader fileReader = new FileReader(file);
+		BufferedReader bufferedReader = new BufferedReader(fileReader);
+		String line=bufferedReader.readLine();
+		bufferedReader.close();
+		Header head=new Header();
+		head.setHeaders(line.trim().split(","));
+		return head;
 	}
-	
+
 
 	/**
 	 * This method will be used in the upcoming assignments
@@ -52,31 +64,79 @@ public class CsvQueryProcessor extends QueryProcessingEngine {
 	@Override
 	public DataTypeDefinitions getColumnType() throws IOException {
 		// TODO Auto-generated method stub
-		
-		// checking for Integer
-		
-		// checking for floating point numbers
-				
-		// checking for date format dd/mm/yyyy
-		
-		// checking for date format mm/dd/yyyy
-		
-		// checking for date format dd-mon-yy
-		
-		// checking for date format dd-mon-yyyy
-		
-		// checking for date format dd-month-yy
-		
-		// checking for date format dd-month-yyyy
-		
-		// checking for date format yyyy-mm-dd
-		
-		return null;
-	}
-	
-	
 
-	
-	
+		// checking for Integer
+
+		// checking for floating point numbers
+
+		// checking for date format dd/mm/yyyy
+
+		// checking for date format mm/dd/yyyy
+
+		// checking for date format dd-mon-yy
+
+		// checking for date format dd-mon-yyyy
+
+		// checking for date format dd-month-yy
+
+		// checking for date format dd-month-yyyy
+
+		// checking for date format yyyy-mm-dd
+
+		DataTypeDefinitions dataTypeDefinitions = new DataTypeDefinitions();
+		FileReader fileReader;
+		try {
+			File file = new File(fileName);
+			fileReader = new FileReader(file);
+		}
+
+		catch(Exception e) {
+			fileReader=new FileReader("data/ipl.csv");
+		}
+
+		BufferedReader bufferedReader = new BufferedReader(fileReader);
+		int headerLength = bufferedReader.readLine().split(",").length;
+		String[] fields = bufferedReader.readLine().split(",", headerLength);
+		bufferedReader.close();
+		String[] dataTypes = new String[headerLength];
+		int index=0;
+
+		for(String field: fields) {
+
+			try {
+				Integer i = Integer.parseInt(field);
+				dataTypes[index++]=i.getClass().getName();
+			} 
+
+			catch(NumberFormatException d) {
+				try {
+					Double dot = Double.parseDouble(field);
+					dataTypes[index++]=dot.getClass().getName();
+					System.out.println(d);
+				} 
+				catch(NumberFormatException e) {
+					if(field.matches("[0-9]{4}-([0][1-9]|[1][0-2])-([012][0-9]|[3][01])")|| //yyyy-mm-dd
+							field.matches("[0-9]{4}/([0][1-9]|[1][0-2])/([012][0-9]|[3][01])")||//yyyy/mm/dd
+							field.matches("([0][1-9]|[1][0-2])/([012][0-9]|[3][01])/([0-9]{4})")||//mm/dd/yyyy
+							field.matches("([012][0-9]|[3][01])-([0][1-9]|[1][0-2])-([0-9]{2})")//dd-mm-yyyy
+							)
+					{
+						dataTypes[index++]="java.util.Date";
+					}
+					else if(field.isEmpty()) 
+					{
+						dataTypes[index++]="java.lang.Object";
+					}
+					else 
+					{
+						dataTypes[index++]=field.getClass().getName();
+						System.out.println(e);
+					}
+				}
+			}
+		}
+		dataTypeDefinitions.setDataTypes(dataTypes);
+		return dataTypeDefinitions;
+	}
 
 }
